@@ -9,4 +9,5 @@ class Face4
     Face4(const unsigned, const unsigned, const unsigned, const unsigned);
 
     unsigned* getPoints();
+    unsigned getPoint(unsigned short);
 };

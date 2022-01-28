@@ -9,4 +9,6 @@ class Point
 
     Point();
     Point(const double,const double,const double);
+
+    void Normalize();
 };

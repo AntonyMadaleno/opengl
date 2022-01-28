@@ -18,3 +18,12 @@ unsigned* Face4::getPoints()
 
     return pts;
 }
+
+unsigned Face4::getPoint(unsigned short n)
+{
+    if (n == 0) {return (*this).p0;}
+    if (n == 1) {return (*this).p1;}
+    if (n == 2) {return (*this).p2;}
+    if (n == 3) {return (*this).p3;}
+    else {return 0;}
+}

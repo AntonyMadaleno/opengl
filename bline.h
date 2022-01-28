@@ -1,5 +1,5 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef BLINE_H
+#define BLINE_H
 #endif
 
 #ifndef POINT_H
@@ -11,41 +11,36 @@
 #include <vector>
 #include <GL/glut.h>
 
-class Sphere 
+class BLine
 {
     private:
     
-    double radius;
-    Point center;
-    unsigned NM;
-    unsigned NP;
+    double R, ER;
     Point color;
+    unsigned DEF;
+    std::vector<Point> pts;
     bool textured;
 
     public:
 
     char* tex;
 
-    Sphere();
-    Sphere(const double);
-    Sphere(const double, const Point);
+    BLine();
+    BLine(const double);
 
     void setTexture(char*); //no Get for this
-
-    void setCenter(const Point);
-    Point getCenter();
 
     void setColor(const Point);
     Point getColor();
 
+    void setLine(std::vector<Point>);
+    std::vector<Point> getLine();
+
     void setRadius(const double);
     double getRadius();
 
-    void setMeridians(const unsigned);
-    void setParralleles(const unsigned);
-
-    unsigned getMeridians();
-    unsigned getParralleles();
+    void setDefinition(const unsigned);
+    unsigned getDefinition();
 
     std::vector<Point> drawPoints();
     std::vector<Face4> drawFaces();
@@ -53,5 +48,11 @@ class Sphere
     void GLDraw();
 
     std::vector<Point> getTexCoord();
+
+    //some optional function to make horn and that sort of stuff
+
+    void setEndingRadius(const double);
+    double getEndingRadius();
+
 
 };
