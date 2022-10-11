@@ -31,6 +31,7 @@ Tore::Tore()
     (*this).NP = 8;
     (*this).angle = 2*M_PI;
     (*this).erad = (*this).orad;
+    (*this).init = false;
 }
 
 Tore::Tore(const double ir, const double r)
@@ -43,6 +44,7 @@ Tore::Tore(const double ir, const double r)
     (*this).NP = 8;
     (*this).angle = 2*M_PI;
     (*this).erad = (*this).orad;
+    (*this).init = false;
 }
 
 Tore::Tore(const double ir, const double r, const Point c)
@@ -55,6 +57,7 @@ Tore::Tore(const double ir, const double r, const Point c)
     (*this).NP = 8;
     (*this).angle = 2*M_PI;
     (*this).erad = (*this).orad;
+    (*this).init = false;
 }
 
 void Tore::setCenter(const Point c)
@@ -86,6 +89,7 @@ void Tore::setAngle(double a)
         a = a + 360;
     }
     (*this).angle = 2*M_PI*a/360;
+    (*this).init = false;
 }
 double Tore::getAngle()
 {   
@@ -95,6 +99,7 @@ double Tore::getAngle()
 void Tore::setInnerRadius(const double r)
 {
     (*this).irad = r;
+    (*this).init = false;
 }
 double Tore::getInnerRadius()
 {
@@ -104,6 +109,7 @@ double Tore::getInnerRadius()
 void Tore::setOuterRadius(const double r)
 {
     (*this).orad = r;
+    (*this).init = false;
 }
 double Tore::getOuterRadius()
 {
@@ -113,6 +119,7 @@ double Tore::getOuterRadius()
 void Tore::setSegments(const unsigned n)
 {
     (*this).NS = n;
+    (*this).init = false;
 }
 unsigned Tore::getSegments()
 {
@@ -122,13 +129,14 @@ unsigned Tore::getSegments()
 void Tore::setParalleles(const unsigned n)
 {
     (*this).NP = n;
+    (*this).init = false;
 }
 unsigned Tore::getParalleles()
 {
     return (*this).NP;
 }
 
-std::vector<Point> Tore::drawPoints()
+void Tore::drawPoints()
 {
 
     std::vector<Point> pts;
@@ -156,14 +164,14 @@ std::vector<Point> Tore::drawPoints()
         }
     }
 
-    return pts;
+    (*this).vbo = pts;
 
 }
 
-std::vector<Face4> Tore::drawFaces()
+void Tore::drawFaces()
 {
 
-    std::vector<Face4> faces;
+    std::vector<Face3> faces;
 
     for (unsigned i = 0; i < (*this).NS; i++)
     {
@@ -184,25 +192,30 @@ std::vector<Face4> Tore::drawFaces()
             unsigned c = in*(*this).NP + jn;
             unsigned d = i*(*this).NP + jn;
 
-            faces.push_back(Face4(a,b,c,d));
+            faces.push_back(Face3(a,b,c));
+            faces.push_back(Face3(c,d,a));
 
         }
     }
 
-    return faces;
+    (*this).faces = faces;
 
 }
 
 void Tore::GLDraw()
 {
-    std::vector<Point> pts = (*this).drawPoints();
-    std::vector<Face4> faces = (*this).drawFaces();
-
-    for (Face4 f : faces)
+    if((*this).init == false)
     {
-        glBegin(GL_POLYGON);
-        for (short i=0;i<4;i++){
-            Point p = pts[f.getPoint(i)];
+        (*this).drawPoints();
+        (*this).drawFaces();
+        (*this).init = true;
+    }
+
+    for (Face3 f : (*this).faces)
+    {
+        glBegin(GL_TRIANGLES);
+        for (short i=0;i<3;i++){
+            Point p = (*this).vbo[f.getPoint(i)];
             glColor3f((*this).color.x, (*this).color.y, (*this).color.z);
             glVertex3f(p.x,p.y,p.z);
         }
@@ -215,9 +228,11 @@ void Tore::GLDraw()
 void Tore::setEndingRadius(const double r)
 {
     (*this).erad = r;
+    (*this).init = false;
 }
 
 double Tore::getEndingRadius()
 {
     return (*this).erad;
+    (*this).init = false;
 }

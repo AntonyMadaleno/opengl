@@ -14,6 +14,10 @@
 #include "face4.h"
 #endif
 
+#ifndef FACE3_H
+#include "face3.h"
+#endif
+
 #ifndef BEZIER4_H
 #include "bezier4.h"
 #endif
@@ -27,9 +31,12 @@ class BSurface
     unsigned DEF;
     Point color;
     bool textured;
+    bool init;
 
     public:
 
+    std::vector<Point> vbo;
+    std::vector<Face3> faces;
     char* tex;
 
     BSurface();
@@ -44,8 +51,8 @@ class BSurface
     void setColor(const Point);
     Point getColor();
 
-    std::vector<Point> drawPoints();
-    std::vector<Face4> drawFaces();
+    void drawPoints();
+    void drawFaces();
 
     void GLDraw();
 

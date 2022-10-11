@@ -7,6 +7,9 @@
 #endif
 #ifndef FACE4_H
 #include "face4.h"
+#ifndef FACE3_H
+#include "face3.h"
+#endif
 #endif
 #include <vector>
 #include <GL/glut.h>
@@ -21,9 +24,13 @@ class Sphere
     unsigned NP;
     Point color;
     bool textured;
+    std::vector<Point> texCoord;
+    bool init;
 
     public:
 
+    std::vector<Point> vbo;
+    std::vector<Face3> faces;
     char* tex;
 
     Sphere();
@@ -42,13 +49,13 @@ class Sphere
     double getRadius();
 
     void setMeridians(const unsigned);
-    void setParralleles(const unsigned);
+    void setParalleles(const unsigned);
 
     unsigned getMeridians();
-    unsigned getParralleles();
+    unsigned getParalleles();
 
-    std::vector<Point> drawPoints();
-    std::vector<Face4> drawFaces();
+    void drawPoints();
+    void drawFaces();
 
     void GLDraw();
 

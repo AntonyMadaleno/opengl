@@ -13,6 +13,9 @@
 #ifndef FACE4_H
 #include "face4.h"
 #endif
+#ifndef FACE3_H
+#include "face3.h"
+#endif
 
 class Revolution
 {
@@ -27,8 +30,13 @@ class Revolution
     Point color;
     double angle;
     bool textured;
+    std::vector<Point> texCoord;
+    bool init;
 
     public:
+
+    std::vector<Point> vbo;
+    std::vector<Face3> faces;
 
     char* tex;
 
@@ -46,8 +54,8 @@ class Revolution
     void setAngle(double);
     double getAngle();
 
-    std::vector<Point> drawPoints();
-    std::vector<Face4> drawFaces();
+    void drawPoints();
+    void drawFaces();
 
     void GLDraw();
 

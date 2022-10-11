@@ -4,6 +4,7 @@
 #include "iostream"
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 
 #ifdef __APPLE__
 #include <GLUT/glut.h> /* Pour Mac OS X */
@@ -46,233 +47,34 @@ int anglex,angley,x,y,xold,yold;
 unsigned char image[256*256*3];
 
 float theta, vsize, camX, camY, camZ;
-int alpha, beta, adir, bdir;
-
-//we declare our objects
-BLine main0_body, main1_body, tail_body, neck_body, seg0_tail, seg1_tail;
-BSurface wing0;
-Revolution skull0, skull1, horn0;
-Sphere skull_sph0;
+int alpha, beta;
 float resize = 0.5;
-
-void idleAnim()
-{
-
-	theta = theta + M_PI/90;
-	glutPostRedisplay();
-
-	beta = (beta + bdir);
-
-	if (beta >= 180)
-	{
-		bdir = -1;
-	}
-	if (beta <= 0)
-	{
-		bdir = 1;
-	}
-
-}
-
-void wingAnim()
-{
-
-	alpha = (alpha + adir);
-
-	if (alpha >= 30)
-	{
-		adir = -2;
-	}
-	if (alpha <= -10)
-	{
-		adir = 2;
-	}
-
-}
-
+int grid[100][100][100];
 
 void setup()
 {
-
-	//GLOBAL SETTINGS
-
-	theta = 0;
-	alpha = 30;
-	adir = -2;
-	beta = 0;
-	bdir = 1;
-	vsize = 20; //distance de vu
-	camX = -10;
-	camY = -5;
-	camZ = -10;
-
-	//BODY SETUP
-	Point a0 = Point(0,2,0);		Point b0 = Point(3,2,0);		Point c0 = Point(3,-3,0);	Point d0 = Point(6,0,0);
-	Bezier4 bez0 = Bezier4(a0,b0,c0,d0);
-
-	main0_body = BLine(3);
-	main0_body.setEndingRadius(2);
-	main0_body.setLine(bez0.Spline());
-	main0_body.setTexture("./res/tex0.jpg");
-
-	Point a1 = a0;	Point b1 = Point(-3,2,0);	Point c1 = Point(-3,3,0);	Point d1 = Point(-5,3,0);
-	Bezier4 bez1 = Bezier4(a1,b1,c1,d1);
-
-	main1_body = BLine(3);
-	main1_body.setEndingRadius(2);
-	main1_body.setLine(bez1.Spline());
-	main1_body.setTexture("./res/tex0.jpg");
-
-	Point a2 = Point(6,0,0);	Point b2 = Point(8,2,0);	Point c2 = Point(8,3,0);	Point d2 = Point(10,3,0);
-	Bezier4 bez2 = Bezier4(a2,b2,c2,d2);
-
-	tail_body = BLine(2);
-	tail_body.setEndingRadius(1);
-	tail_body.setLine(bez2.Spline());
-	tail_body.setTexture("./res/tex0.jpg");
-
-	neck_body = BLine(2);
-	neck_body.setEndingRadius(1);
-	neck_body.setTexture("./res/tex0.jpg");	
-
-	//TAIL SETUP - part is moving given a cosine/sine patern so we dont declare any curve/points here !
-	seg0_tail = BLine(1);
-	seg0_tail.setEndingRadius(0.5);
-	seg0_tail.setTexture("./res/tex0.jpg");
-
-	seg1_tail = BLine(0.5);
-	seg1_tail.setEndingRadius(0);
-	seg1_tail.setTexture("./res/tex0.jpg");
-
-	//HEAD SETUP 
-
-	std::vector<Point> sk0_pts;
-
-	Bezier4 s0Bez = Bezier4(Point(1,0,0), Point(1,0.5,0), Point(2,1,0), Point(2,2,0));
-	skull0 = Revolution(s0Bez.Spline());
-	skull0.setTexture("./res/tex0.jpg");
-
-	Bezier4 s1Bez = Bezier4(Point(2,2,0), Point(2,3,0), Point(0.5,2.5,0), Point(0.5,4,0));
-	skull1 = Revolution(s1Bez.Spline());
-	skull1.setTexture("./res/tex0.jpg");
-
-	Bezier4 s2Bez = Bezier4(Point(0.25,0,0), Point(0.25,0.5,0), Point(0,1,0), Point(0,1.5,0));
-	horn0 = Revolution(s2Bez.Spline());
-	horn0.setTexture("./res/tex0.jpg");
-
-	skull_sph0 = Sphere(0.5);
-	skull_sph0.setCenter(Point(0,0,4));
-	skull_sph0.setTexture("./res/tex0.jpg");
-
-	
-}
-
-void DrawBody()
-{
-	//body will remain static no movement
-	main0_body.GLDraw();
-	main1_body.GLDraw();
-	tail_body.GLDraw();
-
-	//NECK
-	std::vector<Point> npts;
-
-	Point a3 = Point(-5,3,0);	Point b3 = Point(-6,3,0);	Point c3 = Point(-7,1*cos(theta) + 4,0);	
-	Point d3 = Point(-8,1*cos(theta) + 4,0);
-	Bezier4 bez3 = Bezier4(a3,b3,c3,d3);
-
-	unsigned it = 0;
-	for (Point p : bez3.Spline())
+	srand(time(NULL));
+	for(int x = 0; x<100; x++)
 	{
-		p.z += cos( (M_PI*beta/180) ) * (it)/bez3.getDefinition();
-		npts.push_back(p);
-		it++;
+			for(int y = 0; y<100; y++)
+		{
+				for(int z = 0; z<100; z++)
+			{
+
+				if(rand()%100 < 30)
+				{
+					grid[x][y][z] = 1;
+				}
+				else
+				{
+					grid[x][y][z] = 0;
+				}
+
+			}
+		}
 	}
-
-	neck_body.setLine(npts);
-	neck_body.GLDraw();
-
 }
 
-void DrawTail()
-{
-
-	//this need to be recalcultated do to animation
-	Point a4 = Point(0,0,0);	Point b4 = Point(2,0,0);	
-	Point c4 = Point(3,cos(theta),0);	Point d4 = Point(4+sin(theta),cos(theta),0);
-	Bezier4 bez4 = Bezier4(a4,b4,c4,d4);
-
-	seg0_tail.setLine(bez4.Spline());
-
-	Point a5 = Point(4+sin(theta),cos(theta),0);	Point b5 = Point(5.5+sin(theta),cos(theta),0);
-	Point c5 = Point(7,cos(2*theta),0);	Point d5 = Point(8,0,0);
-	Bezier4 bez5 = Bezier4(a5,b5,c5,d5);
-
-	seg1_tail.setLine(bez5.Spline());
-
-	//tail
-	glPushMatrix();
-
-	glTranslatef(10,3,0);
-
-	seg0_tail.GLDraw();
-	seg1_tail.GLDraw();
-
-	glPopMatrix();
-
-}
-
-void DrawWing()
-{
-	//WING SETUP
-	std::vector<std::vector<Point>> BSP0;
-
-	std::vector<Point> vec0, vec1, vec2, vec3;
-
-	vec0.push_back(Point(0,0,0)); vec0.push_back(Point(2,4*cos(theta),0)); 
-	vec0.push_back(Point(4,-4*cos(theta),0)); vec0.push_back(Point(6,0,0));
-
-	vec1.push_back(Point(0,0,2)); vec1.push_back(Point(2,2*cos(theta),2)); 
-	vec1.push_back(Point(4,-2*cos(theta),2)); vec1.push_back(Point(6,0,2));
-
-	vec2.push_back(Point(0,0,4)); vec2.push_back(Point(2,4*cos(theta),4)); 
-	vec2.push_back(Point(4,-4*cos(theta),4)); vec2.push_back(Point(6,0,4));
-
-	vec3.push_back(Point(0,0,6)); vec3.push_back(Point(2,4*cos(theta),6)); 
-	vec3.push_back(Point(4,-4*cos(theta),6)); vec3.push_back(Point(6,0,6));
-
-	BSP0.push_back(vec0); BSP0.push_back(vec1); BSP0.push_back(vec2); BSP0.push_back(vec3);
-
-	wing0 = BSurface(BSP0);
-	wing0.setTexture("./res/tex0.jpg");
-	wing0.GLDraw();
-}
-
-void DrawHead()
-{
-	glPushMatrix();
-	glTranslatef(-8,1*cos(theta) + 4, cos( (M_PI*beta/180) ));
-	glRotatef(90,0,0,1);
-	skull0.GLDraw();
-	skull1.GLDraw();
-	skull_sph0.GLDraw();
-	glPopMatrix();
-
-	for (int i = 0; i < 8; i++)
-	{
-
-		glPushMatrix();		
-		glTranslatef(-10,2*cos(2*M_PI*i/8) + 4, 2*sin(2*M_PI*i/8));
-		glTranslatef(0,1*cos(theta),cos((M_PI*beta/180)));
-		glRotatef(360*i/8,1,0,0);
-		
-		horn0.GLDraw();
-
-		glPopMatrix();
-
-	}
-
-}
 
 int main(int argc,char **argv)
 {
@@ -359,66 +161,6 @@ void affichage()
 	glRotatef(angley,1.0,0.0,0.0);
 	glRotatef(anglex,0.0,1.0,0.0);
 
-	//coord homogènes : position
-	GLfloat position_source0[] = {10.0, 10.0, 10.0, 1.0};
-	//direction source à distance infinie
-	GLfloat dir0[] = {-1.0, -1.0, -1.0, 0.0};
-	GLfloat dif_0[] = {float(beta)/180, 0, 0, 1.0};//composante diffuse
-	GLfloat spec_0[] = {float(beta)/180, 0, 0, 1.0}; //composante spéculaire
-	//spécification des propriétés
-	glLightfv(GL_LIGHT0, GL_POSITION, position_source0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, dif_0);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, spec_0);
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, dir0);
-	//activation de la source GL_LIGHT0
-	glEnable(GL_LIGHT0);
-
-	//coord homogènes : position
-	GLfloat position_source1[] = {0.0, 0.0, 0.0, 1.0};
-	//direction source à distance infinie
-	GLfloat dif_1[] = {0.5, 0.5, 0.5, 1.0};//composante diffuse
-	GLfloat spec_1[] = {0.5, 0.5, 0.5, 1.0}; //composante spéculaire
-	GLfloat amb[] = {0.5, 0.5, 0.5, 1.0}; //composante spéculaire
-	//spécification des propriétés
-	glLightfv(GL_LIGHT1, GL_POSITION, position_source1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, dif_1);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, spec_1);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, amb);
-	//activation de la source GL_LIGHT0
-	glEnable(GL_LIGHT1);
-
-	//Drawings
-	glBindTexture(GL_TEXTURE_2D, tex0);
-	glPushMatrix();
-
-	glScalef(resize,resize,resize);
-
-	DrawBody();
-	DrawTail();
-	DrawHead();
-
-	glPopMatrix();
-
-	glBindTexture(GL_TEXTURE_2D, tex1);
-	//WING
-	glPushMatrix();
-	glTranslatef(0,resize*2,resize*(3));
-	glRotatef(alpha,0,0,1);
-	glRotatef(30,-1,0,0);
-	glRotatef(alpha + 15,0,1,0);
-	glScalef(resize*1.5,resize*1.5,resize*2);
-	DrawWing();
-	glPopMatrix();
-
-	//WING
-	glPushMatrix();
-	glTranslatef(0,resize*2,resize*(-3));
-	glRotatef(alpha,0,0,1);
-	glRotatef(30,1,0,0);
-	glRotatef(alpha + 15,0,-1,0);
-	glScalef(resize*1.5,resize*1.5,-resize*2);
-	DrawWing();
-	glPopMatrix();
 
 /*
     //Repère
@@ -453,10 +195,7 @@ void clavier(unsigned char touche,int x,int y)
 {
   	switch (touche)
     {
-		case '1': /*anim des ailes*/
-			wingAnim();
-		break;
-		case 'z':
+		case 'z': /*anim des ailes*/
 			resize = resize - 0.010;
 			if (resize <= 0)
 			{

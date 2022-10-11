@@ -28,6 +28,7 @@ BLine::BLine()
     (*this).DEF = 16;
     (*this).ER = (*this).R;
     (*this).textured = false;
+    (*this).init = false;
 }
 
 BLine::BLine(const double r)
@@ -37,6 +38,7 @@ BLine::BLine(const double r)
     (*this).DEF = 16;
     (*this).ER = (*this).R;
     (*this).textured = false;
+    (*this).init = false;
 }
 
 void BLine::setTexture(char* file)
@@ -48,6 +50,7 @@ void BLine::setTexture(char* file)
 void BLine::setColor(const Point c)
 {
     (*this).color = c;
+    (*this).init = false;
 }
 Point BLine::getColor()
 {
@@ -57,6 +60,7 @@ Point BLine::getColor()
 void BLine::setLine(std::vector<Point> pts)
 {
     (*this).pts = pts;
+    (*this).init = false;
 }
 std::vector<Point> BLine::getLine()
 {
@@ -66,22 +70,25 @@ std::vector<Point> BLine::getLine()
 void BLine::setRadius(const double r)
 {
     (*this).R = r;
+    (*this).init = false;
 }
 double BLine::getRadius()
 {
     return (*this).R;
+    (*this).init = false;
 }
 
 void BLine::setDefinition(const unsigned n)
 {
     (*this).DEF = n;
+    (*this).init = false;
 }
 unsigned BLine::getDefinition()
 {
     return (*this).DEF;
 }
 
-std::vector<Point> BLine::drawPoints()
+void BLine::drawPoints()
 {
 
     std::vector<Point> pts;
@@ -106,15 +113,14 @@ std::vector<Point> BLine::drawPoints()
         i++;
     }
 
-    return pts;
+    (*this).vbo = pts;
 
 }
 
-std::vector<Face4> BLine::drawFaces()
+void BLine::drawFaces()
 {
 
-    std::vector<Face4> faces;
-    std::vector<Point> pts = (*this).drawPoints();
+    std::vector<Face3> faces;
 
     for (unsigned m = 0; m < (*this).pts.size() -1; m++)
     {
@@ -130,13 +136,14 @@ std::vector<Face4> BLine::drawFaces()
             unsigned c = in + mn*(*this).DEF;
             unsigned d = in + m*(*this).DEF;
 
-            faces.push_back(Face4(a,b,c,d));
+            faces.push_back(Face3(a,b,c));
+            faces.push_back(Face3(c,d,a));
 
         }
 
     }
 
-    return faces;
+    (*this).faces = faces;
 
 }
 
@@ -161,33 +168,40 @@ std::vector<Point> BLine::getTexCoord()
 
 void BLine::GLDraw()
 {
-    std::vector<Point> pts = (*this).drawPoints();
-    std::vector<Face4> faces = (*this).drawFaces();
-    std::vector<Point> texCoord;
-
-    if ((*this).textured)
+    if((*this).init == false)
     {
-        texCoord = (*this).getTexCoord();
+        (*this).drawPoints();
+        (*this).drawFaces();
+        (*this).init = true;
+
+        if ((*this).textured)
+        {
+            (*this).texCoord = (*this).getTexCoord();
+        }
     }
+    
 
-    for (Face4 f : faces)
+    for (Face3 f : (*this).faces)
     {
-        glBegin(GL_POLYGON);
-        for (short i=0;i<4;i++){
-            Point p = pts[f.getPoint(i)];
-            glVertex3f(p.x,p.y,p.z);
+        glBegin(GL_TRIANGLES);
+        for (short i=0;i<3;i++){
+            Point p = (*this).vbo[f.getPoint(i)];
             if ((*this).textured)
             {
                 double x,y;
-                x = texCoord[f.getPoint(i)].x;
-                y = texCoord[f.getPoint(i)].y;
-                glTexCoord2f( x, y );
+                unsigned index = f.getPoint(i);
+
+                    x = texCoord[index].x;
+                    y = texCoord[index].y;
+                    glTexCoord2f( x, y );
                 
             }
             else
             {
                 glColor3f((*this).color.x, (*this).color.y, (*this).color.z);
             }
+            
+            glVertex3f(p.x,p.y,p.z);
         }
         glEnd();
     }

@@ -13,6 +13,7 @@
 Revolution::Revolution()
 {
     (*this).textured = false;
+    (*this).init = false;
 }
 
 Revolution::Revolution(const std::vector<Point> pts)
@@ -22,17 +23,20 @@ Revolution::Revolution(const std::vector<Point> pts)
     (*this).color = Point(1,1,1);
     (*this).angle = 2*M_PI;
     (*this).textured = false;
+    (*this).init = false;
 }
 
 void Revolution::setTexture(char* file)
 {
     (*this).textured = true;
     (*this).tex = file;
+    (*this).init = false;
 }
 
 void Revolution::setMeridians(const unsigned n)
 {
     (*this).NM = n;
+    (*this).init = false;
 }
 
 unsigned Revolution::getMeridians()
@@ -43,6 +47,7 @@ unsigned Revolution::getMeridians()
 void Revolution::setColor(const Point p)
 {
     (*this).color = p;
+    (*this).init = false;
 }
 
 Point Revolution::getColor()
@@ -61,6 +66,7 @@ void Revolution::setAngle(double a)
         a = a + 360;
     }
     (*this).angle = 2*M_PI*a/360;
+    (*this).init = false;
 }
 
 double Revolution::getAngle()
@@ -68,7 +74,7 @@ double Revolution::getAngle()
     return (*this).angle*360/M_PI;
 }
 
-std::vector<Point> Revolution::drawPoints()
+void Revolution::drawPoints()
 {
 
     std::vector<Point> pts;
@@ -89,14 +95,14 @@ std::vector<Point> Revolution::drawPoints()
         } 
     }
 
-    return pts;
+    (*this).vbo = pts;
 
 }
 
-std::vector<Face4> Revolution::drawFaces()
+void Revolution::drawFaces()
 {
 
-    std::vector<Face4> faces;
+    std::vector<Face3> faces;
 
     for (unsigned m = 0; m < (*this).NM; m++)
     {
@@ -112,12 +118,13 @@ std::vector<Face4> Revolution::drawFaces()
             unsigned c = in + mn*(*this).pts.size();
             unsigned d = in + m*(*this).pts.size();
 
-            faces.push_back(Face4(a,b,c,d));
+            faces.push_back(Face3(a,b,c));
+            faces.push_back(Face3(c,d,a));
 
         }
     }
 
-    return faces;
+    (*this).faces = faces;
 
 }
 
@@ -144,20 +151,23 @@ std::vector<Point> Revolution::getTexCoord()
 void Revolution::GLDraw()
 {
 
-    std::vector<Point> pts = (*this).drawPoints();
-    std::vector<Face4> faces = (*this).drawFaces();
-    std::vector<Point> texCoord;
-
-    if ((*this).textured)
+     if((*this).init == false)
     {
-        texCoord = (*this).getTexCoord();
+        (*this).drawPoints();
+        (*this).drawFaces();
+        (*this).init = true;
+
+        if ((*this).textured)
+        {
+            (*this).texCoord = (*this).getTexCoord();
+        }
     }
 
-    for (Face4 f : faces)
+    for (Face3 f : (*this).faces)
     {
 
-        glBegin(GL_POLYGON);
-        for (short i=0;i<4;i++){
+        glBegin(GL_TRIANGLES);
+        for (short i=0;i<3;i++){
             if ((*this).textured)
             {
                 double x,y;
@@ -170,7 +180,7 @@ void Revolution::GLDraw()
             {
                 glColor3f((*this).color.x, (*this).color.y, (*this).color.z);
             }
-            Point p = pts[f.getPoint(i)];
+            Point p = (*this).vbo[f.getPoint(i)];
             glVertex3f(p.x,p.y,p.z);
         }
         glEnd();

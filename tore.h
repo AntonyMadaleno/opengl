@@ -8,6 +8,9 @@
 #ifndef FACE4_H
 #include "face4.h"
 #endif
+#ifndef FACE3_H
+#include "face3.h"
+#endif
 #include <vector>
 #include <GL/glut.h>
 
@@ -23,8 +26,12 @@ class Tore
     Point color;
     double angle;
     double erad;
+    bool init;
 
     public:
+
+    std::vector<Point> vbo;
+    std::vector<Face3> faces;
 
     Tore();
     Tore(const double, const double);
@@ -51,8 +58,8 @@ class Tore
     void setParalleles(const unsigned);
     unsigned getParalleles();
 
-    std::vector<Point> drawPoints();
-    std::vector<Face4> drawFaces();
+    void drawPoints();
+    void drawFaces();
 
     void GLDraw();
 

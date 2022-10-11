@@ -26,6 +26,7 @@ double B(double n, double i, double u)
 BSurface::BSurface()
 {
     (*this).textured = false;
+    (*this).init = false;
 }
 
 BSurface::BSurface(const std::vector<std::vector<Point>> pts)
@@ -34,6 +35,7 @@ BSurface::BSurface(const std::vector<std::vector<Point>> pts)
     (*this).DEF = 16;
     (*this).color = Point(1,1,1);
     (*this).textured = false;
+    (*this).init = false;
 
 }
 
@@ -46,6 +48,7 @@ void BSurface::setTexture(char* file)
 void BSurface::setDefinition(const unsigned n)
 {
     (*this).DEF = n;
+    (*this).init = false;
 }
 
 unsigned BSurface::getDefinition()
@@ -56,6 +59,7 @@ unsigned BSurface::getDefinition()
 void BSurface::setColor(const Point p)
 {
     (*this).color = p;
+    (*this).init = false;
 }
 
 Point BSurface::getColor()
@@ -63,7 +67,7 @@ Point BSurface::getColor()
     return (*this).color;
 }
 
-std::vector<Point> BSurface::drawPoints()
+void BSurface::drawPoints()
 {
 
     std::vector<Point> pts;
@@ -101,14 +105,14 @@ std::vector<Point> BSurface::drawPoints()
 
     }
 
-    return pts;
+    (*this).vbo = pts;
 
 }
 
-std::vector<Face4> BSurface::drawFaces()
+void BSurface::drawFaces()
 {
 
-    std::vector<Face4> faces;
+    std::vector<Face3> faces;
 
     for (int i=0; i < (*this).DEF-1; i++)
     {
@@ -120,12 +124,13 @@ std::vector<Face4> BSurface::drawFaces()
             int c = j+1 + (i+1) * (*this).DEF;
             int d = j+1 + i * (*this).DEF;
 
-            faces.push_back(Face4(a,b,c,d));
+            faces.push_back(Face3(a,b,c));
+            faces.push_back(Face3(c,d,a));
         }
 
     }
 
-    return faces;
+    (*this).faces = faces;
 
 }
 
@@ -151,8 +156,13 @@ std::vector<Point> BSurface::getTexCoord()
 void BSurface::GLDraw()
 {
 
-    std::vector<Point> pts = (*this).drawPoints();
-    std::vector<Face4> faces = (*this).drawFaces();
+    if((*this).init == false)
+    {
+        (*this).drawPoints();
+        (*this).drawFaces();
+        (*this).init = true;
+    }
+
     std::vector<Point> texCoord;
 
     if ((*this).textured)
@@ -160,12 +170,12 @@ void BSurface::GLDraw()
         texCoord = (*this).getTexCoord();
     }
 
-    for (Face4 f : faces)
+    for (Face3 f : (*this).faces)
     {
 
-        glBegin(GL_POLYGON);
-        for (short i=0;i<4;i++){
-            Point p = pts[f.getPoint(i)];
+        glBegin(GL_TRIANGLES);
+        for (short i=0;i<3;i++){
+            Point p = (*this).vbo[f.getPoint(i)];
             glVertex3f(p.x,p.y,p.z);
             if ((*this).textured)
             {
